@@ -2,23 +2,36 @@ name: RSS
 
 on:
   schedule:
-    - cron: "*/10 * * * *" # 每 10 分鐘執行一次
+    - cron: '*/1 * * * *' # 每一分鐘執行一次
 
 jobs:
-  rss:
+  fetch-and-upload:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2 # 使用 checkout action 下載 repo 的程式碼
+      - name: Checkout repo
+        uses: actions/checkout@v2 # 使用 checkout 動作來取得 repo 的內容
+
+      - name: Install xmlstarlet
+        run: sudo apt-get install -y xmlstarlet # 安裝 xmlstarlet 工具，用來處理 XML 檔案
+
       - name: Fetch RSS feeds
-        run: | # 使用 bash 指令下載 RSS feeds
-          curl https://news.pts.org.tw/xml/newsfeed.xml > pts.xml # 下載公共電視 公視新聞
-          curl https://www.peopo.org/rss-news > peopo-news.xml # 下載 PeoPo公民新聞 最新報導10則
-          curl https://www.peopo.org/rss-top10 > peopo-top10.xml # 下載 PeoPo公民新聞 本日推薦10則
-          curl https://rthk.hk/rthk/news/rss/c_expressnews_clocal.xml > rthk-local.xml # 下載 香港電台新聞網 本地新聞
-          curl https://rthk.hk/rthk/news/rss/c_expressnews_greaterchina.xml > rthk-china.xml # 下載 香港電台新聞網 大中華新聞
-      - name: Commit and push changes to repository
-        uses: stefanzweifel/git-auto-commit-action@v4 # 使用 git-auto-commit-action 自動提交和推送變更
+        run: | # 使用多行指令來取得 RSS feeds 並存成 XML 檔案
+          curl https://news.pts.org.tw/xml/newsfeed.xml > feeds/公共電視_公視新聞.xml
+          curl https://www.peopo.org/rss-news > feeds/PeoPo公民新聞_最新報導10則.xml
+          curl https://www.peopo.org/rss-top10 > feeds/PeoPo公民新聞_本日推薦10則.xml
+          curl https://rthk.hk/rthk/news/rss/c_expressnews_clocal.xml > feeds/香港電台新聞網_本地新聞.xml
+          curl https://rthk.hk/rthk/news/rss/c_expressnews_greaterchina.xml > feeds/香港電台新聞網_大中華新聞.xml
+
+      - name: Format RSS feeds
+        run: | # 使用多行指令來格式化 RSS feeds 的 XML 檔案，讓它們更容易閱讀
+          xmlstarlet fo -s 2 feeds/公共電視_公視新聞.xml > feeds/公共電視_公視新聞_formatted.xml
+          xmlstarlet fo -s 2 feeds/PeoPo公民新聞_最新報導10則.xml > feeds/PeoPo公民新聞_最新報導10則_formatted.xml
+          xmlstarlet fo -s 2 feeds/PeoPo公民新聞_本日推薦10則.xml > feeds/PeoPo公民新聞_本日推薦10則_formatted.xml
+          xmlstarlet fo -s 2 feeds/香港電台新聞網_本地新聞.xml > feeds/香港電台新聞網_本地新聞_formatted.xml
+          xmlstarlet fo -s 2 feeds/香港電台新聞網_大中華新聞.xml > feeds/香港電台新聞網_大中華新聞_formatted.xml
+
+      - name: Upload RSS feeds
+        uses: actions/upload-artifact@v2 # 使用 upload-artifact 動作來上傳 RSS feeds 的 XML 檔案到 repo 裡
         with:
-          commit_message: "Update RSS feeds" # 指定提交訊息
-          file_pattern: "*.xml" # 指定要提交的檔案類型
+          name: feeds
+          path: feeds/*.xml
