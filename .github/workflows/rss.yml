@@ -1,0 +1,24 @@
+name: RSS
+
+on:
+  schedule:
+    - cron: "0 * * * *" # 每小時執行一次
+
+jobs:
+  rss:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2 # 使用 checkout action 下載 repo 的程式碼
+      - name: Fetch RSS feeds
+        run: | # 使用 bash 指令下載 RSS feeds
+          curl https://news.pts.org.tw/xml/newsfeed.xml > pts.xml # 下載公共電視 公視新聞
+          curl https://www.peopo.org/rss-news > peopo-news.xml # 下載 PeoPo公民新聞 最新報導10則
+          curl https://www.peopo.org/rss-top10 > peopo-top10.xml # 下載 PeoPo公民新聞 本日推薦10則
+          curl https://rthk.hk/rthk/news/rss/c_expressnews_clocal.xml > rthk-local.xml # 下載 香港電台新聞網 本地新聞
+          curl https://rthk.hk/rthk/news/rss/c_expressnews_greaterchina.xml > rthk-china.xml # 下載 香港電台新聞網 大中華新聞
+      - name: Commit and push changes to repository
+        uses: stefanzweifel/git-auto-commit-action@v4 # 使用 git-auto-commit-action 自動提交和推送變更
+        with:
+          commit_message: "Update RSS feeds" # 指定提交訊息
+          file_pattern: "*.xml" # 指定要提交的檔案類型
