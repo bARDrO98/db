@@ -2,7 +2,7 @@ name: RSS
 
 on:
   schedule:
-    - cron: '*/5 * * * *' # 每一分鐘執行一次
+    - cron: '*/5 * * * *' # 每5分鐘執行一次
 
 jobs:
   fetch-and-upload:
@@ -13,6 +13,9 @@ jobs:
 
       - name: Install xmlstarlet
         run: sudo apt-get install -y xmlstarlet # 安裝 xmlstarlet 工具，用來處理 XML 檔案
+
+      - name: Create feeds folder
+        run: mkdir -p feeds # 使用 -p 選項來建立 feeds 資料夾，如果已經存在就忽略
 
       - name: Fetch RSS feeds
         run: | # 使用多行指令來取得 RSS feeds 並存成 XML 檔案
